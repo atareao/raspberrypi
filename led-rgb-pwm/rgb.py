@@ -2,111 +2,97 @@
 import RPi.GPIO as GPIO
 import time
 
-# Set up a color table in Hexadecimal
-COLORS = [0xFF0000, 0x00FF00, 0x0000FF, 0x00FFFF, 0xFF00FF, 0xFFFF00, 0xFFFFFF, 0xB695C0]
-# Set pins' channels with dictionary
+# Define los colores en modo hexadecimal
+COLORS = [0xFF0000, 0x00FF00, 0x0000FF, 0x00FFFF, 0xFF00FF, 0xFFFF00, 0xFFFFFF,
+          0xB695C0]
+# Establece los pines conforme a GPIO
 pins = {'Red': 22, 'Green': 17, 'Blue': 27}
 
-# Define a MAP function for mapping values.
-# Like from 0~255 to 0~100
-def MAP(x, in_min, in_max, out_min, out_max):
-	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
-# Define a function to set up colors 
-# input color should be Hexadecimal with 
-# red value, blue value, green value.
-def setColor(color, p_R, p_G, p_B):
-	# Devide colors from 'color' veriable
-	R_val = (color & 0xFF0000) >> 16
-	G_val = (color & 0x00FF00) >> 8
-	B_val = (color & 0x0000FF) >> 0
-
-	# Map color value from 0~255 to 0~100
-	R_val = MAP(R_val, 0, 255, 0, 100)
-	G_val = MAP(G_val, 0, 255, 0, 100)
-	B_val = MAP(B_val, 0, 255, 0, 100)
-
-	# Change the colors
-	p_R.ChangeDutyCycle(R_val)
-	p_G.ChangeDutyCycle(G_val)
-	p_B.ChangeDutyCycle(B_val)
-
-	print("R_val = %s, G_val = %s, B_val = %s"%(R_val, G_val, B_val))
-
-def setColor2(color):
-     # Devide colors from 'color' veriable
-     R_val = (color & 0xFF0000) >> 16
-     G_val = (color & 0x00FF00) >> 8
-     B_val = (color & 0x0000FF) >> 0
-
-     # Map color value from 0~255 to 0~1
-     R_val = int(MAP(R_val, 0, 255, 0, 1))
-     G_val = int(MAP(G_val, 0, 255, 0, 1))
-     B_val = int(MAP(B_val, 0, 255, 0, 1))
-
-     GPIO.output(pins['Red'], R_val)
-     GPIO.output(pins['Green'], G_val)
-     GPIO.output(pins['Blue'], B_val)
-
-     print("R_val = %s, G_val = %s, B_val = %s"%(R_val, G_val, B_val))
+def mapea(x, in_min, in_max, out_min, out_max):
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
 
-def main2():
-	try:
-		GPIO.setmode(GPIO.BCM)
-		for i in pins:
-			GPIO.setup(pins[i], GPIO.OUT, initial=GPIO.HIGH)
+def set_color(color, p_R, p_G, p_B):
+    # calcula el valor para cada canal R, G, B
+    R_val = (color & 0xFF0000) >> 16
+    G_val = (color & 0x00FF00) >> 8
+    B_val = (color & 0x0000FF) >> 0
 
-		# Set all led as pwm channel,
-		#  and frequece to 2KHz
-		p_R = GPIO.PWM(pins['Red'], 2000)
-		p_G = GPIO.PWM(pins['Green'], 2000)
-		p_B = GPIO.PWM(pins['Blue'], 2000)
+    # Convierte el color de 0~255 a un valor de 0 a 100 (entero)
+    R_val = mapea(R_val, 0, 255, 0, 100)
+    G_val = mapea(G_val, 0, 255, 0, 100)
+    B_val = mapea(B_val, 0, 255, 0, 100)
 
-		# Set all begin with value 0
-		p_R.start(0)
-		p_G.start(0)
-		p_B.start(0)
+    # Change the colors
+    p_R.ChangeDutyCycle(R_val)
+    p_G.ChangeDutyCycle(G_val)
+    p_B.ChangeDutyCycle(B_val)
 
-		while True:
-			for color in COLORS:
-				setColor(color, p_R, p_G, p_B)
-				time.sleep(2)
+    print("R_val = %s, G_val = %s, B_val = %s" % (R_val, G_val, B_val))
 
-		# Stop all pwm channel
-		p_R.stop()
-		p_G.stop()
-		p_B.stop()
-		# Turn off all LEDs
-		GPIO.output(pins, GPIO.HIGH)
-		# Release resource
 
-	except Exception as e:
-		print(e)
-	finally:
-		# Release resource
-		GPIO.cleanup()
-
+# quita la tensión en cada uno de los pines
 def reset():
-        for i in pins:
-                GPIO.output(pins[i], 0)
+    for i in pins:
+        GPIO.output(pins[i], 0)
+
+
+class Led(object):
+
+    def __init__(self, pin_red, pin_green, pin_blue):
+        # Establecemos los LED como canales PWM a una frecuencia de 2 kHz
+        self.led = {}
+        self.led['red'] = GPIO.PWM(pin_red, 2000)
+        self.led['green'] = GPIO.PWM(pin_green, 2000)
+        self.led['blue'] = GPIO.PWM(pin_blue, 2000)
+
+        # Iniciamos todos los led con el valor 0
+        for color in self.led:
+            self.led[color].start(0)
+
+    def stop(self):
+        for color in self.led:
+            self.led[color].stop()
+
+    def set_color(self, color):
+        # calcula el valor para cada canal R, G, B
+        R_val = (color & 0xFF0000) >> 16
+        G_val = (color & 0x00FF00) >> 8
+        B_val = (color & 0x0000FF) >> 0
+
+        # Convierte el color de 0~255 a un valor de 0 a 100 (entero)
+        R_val = mapea(R_val, 0, 255, 0, 100)
+        G_val = mapea(G_val, 0, 255, 0, 100)
+        B_val = mapea(B_val, 0, 255, 0, 100)
+
+        # Change the colors
+        self.led['red'].ChangeDutyCycle(R_val)
+        self.led['green'].ChangeDutyCycle(G_val)
+        self.led['blue'].ChangeDutyCycle(B_val)
+
+        print("R_val = %s, G_val = %s, B_val = %s" % (R_val, G_val, B_val))
+
+
 def main():
-        try:
-                GPIO.setmode(GPIO.BCM)
-                for i in pins:
-                        GPIO.setup(pins[i], GPIO.OUT, initial=GPIO.HIGH)
-		# Reseteado de valores
-                while True:
-                        for color in COLORS:
-                                setColor2(color)
-                                time.sleep(2)
-                                reset()
-        except Exception as e:
-                print(e)
-        finally:
-                # Release resource
-                GPIO.cleanup()
+    try:
+        GPIO.setmode(GPIO.BCM)
+        for i in pins:
+            GPIO.setup(pins[i], GPIO.OUT, initial=GPIO.HIGH)
+
+        led = Led()
+
+        while True:
+            for color in COLORS:
+                led.set_color(color)
+                time.sleep(2)
+        led.stop()
+        GPIO.output(pins, GPIO.HIGH)
+    except Exception as e:
+        print(e)
+    finally:
+        GPIO.cleanup()
 
 
 if __name__ == '__main__':
-	main2()
+    main()
