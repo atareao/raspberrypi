@@ -80,7 +80,7 @@ def main():
         for i in pins:
             GPIO.setup(pins[i], GPIO.OUT, initial=GPIO.HIGH)
 
-        led = Led()
+        led = Led(pins['Red'], pins['Green'], pins['Blue'])
 
         while True:
             for color in COLORS:
