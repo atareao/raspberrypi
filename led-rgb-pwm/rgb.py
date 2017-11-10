@@ -229,6 +229,7 @@ def main():
                 print('Color: {0}'.format(nombre))
                 led.set_color(color)
                 time.sleep(2)
+                led.set_color(0x000000)
         led.stop()
         GPIO.output(pins, GPIO.HIGH)
     except Exception as e:
