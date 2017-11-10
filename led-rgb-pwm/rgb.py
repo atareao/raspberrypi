@@ -155,25 +155,6 @@ def mapea(x, in_min, in_max, out_min, out_max):
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
 
-def set_color(color, p_R, p_G, p_B):
-    # calcula el valor para cada canal R, G, B
-    R_val = (color & 0xFF0000) >> 16
-    G_val = (color & 0x00FF00) >> 8
-    B_val = (color & 0x0000FF) >> 0
-
-    # Convierte el color de 0~255 a un valor de 0 a 100 (entero)
-    R_val = mapea(R_val, 0, 255, 0, 100)
-    G_val = mapea(G_val, 0, 255, 0, 100)
-    B_val = mapea(B_val, 0, 255, 0, 100)
-
-    # Change the colors
-    p_R.ChangeDutyCycle(R_val)
-    p_G.ChangeDutyCycle(G_val)
-    p_B.ChangeDutyCycle(B_val)
-
-    print("R_val = %s, G_val = %s, B_val = %s" % (R_val, G_val, B_val))
-
-
 # quita la tensión en cada uno de los pines
 def reset():
     for i in pins:
@@ -204,9 +185,9 @@ class Led(object):
         B_val = (color & 0x0000FF) >> 0
 
         # Convierte el color de 0~255 a un valor de 0 a 100 (entero)
-        R_val = mapea(R_val, 0, 255, 0, 100)
-        G_val = mapea(G_val, 0, 255, 0, 100)
-        B_val = mapea(B_val, 0, 255, 0, 100)
+        R_val = int(mapea(R_val, 0, 255, 0, 100))
+        G_val = int(mapea(G_val, 0, 255, 0, 100))
+        B_val = int(mapea(B_val, 0, 255, 0, 100))
 
         # Change the colors
         self.led['red'].ChangeDutyCycle(R_val)
